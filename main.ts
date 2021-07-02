@@ -14,6 +14,15 @@ wsRouter.use("/ws", router);
 const port = 3000;
 const hostname = "0.0.0.0";
 
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+});
+
 app.use(router.routes());
 app.use(router.allowedMethods());
 app.listen({ port, hostname });
