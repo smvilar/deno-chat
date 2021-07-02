@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Hello there</title>
+	<style>
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		}
+		main > div {
+			display: flex;
+			background-color: #fafafa;
+		}
+		main > div:nth-child(even) {
+			background-color: #ebebeb;
+		}
+		main > div > img {
+			width: 40px;
+			height: 40px;
+		}
+		form {
+			position: fixed;
+			bottom: 20px;
+			width: 100%;
+		}
+		.avatar {
+			width: 60px;
+			height: 60px;
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<h1>Welcome to my site</h1>
+		<p>Socket status: <span class="socket-status">connecting</span><p>
+	</header>
+	<form>
+		<img class="avatar">
+		<input autofocus type="text" name="prompt" id="prompt" placeholder="Type here...">
+	</form>
+	<main>
+	</main>
+	<script>
+		let uid;
+		const img = document.querySelector('.avatar');
+		const form = document.querySelector('form');
+		const container = document.querySelector('main');
+		const socketStatus = document.querySelector('.socket-status');
+		const path = `${location.protocol.replace('http', 'ws')}//${location.host}/ws`;
+		const ws = new WebSocket(path);
+		ws.onopen = (evt) => {
+			socketStatus.textContent = 'connected';
+		}
+		ws.onerror = (evt) => {
+			console.log(evt);
+		}
+		ws.onclose = (evt) => {
+			socketStatus.textContent = 'disconnected';
+		}
+		ws.onmessage = (evt) => {
+			try {
+				const msg = JSON.parse(evt.data);
+				switch (msg.type) {
+					case 'welcome':
+						uid = msg.uid;
+						img.src = robo(uid);
+						break;
+					case 'text':
+						addMessage(msg.uid, msg.text);
+						break;
+				}
+			} catch (e) {
+				console.error(e);
+			}
+		}
+		function submit(evt) {
+			evt.preventDefault();
+			const input = form.elements.item(0);
+			if (input.value) {
+				ws.send(input.value);
+				input.value = "";
+			}
+		}
+		form.addEventListener('submit', submit);
+
+		function addMessage(from, message) {
+			const div = document.createElement('div');
+			const p = document.createElement('p');
+			const img = document.createElement('img');
+			p.textContent = message;
+			img.src = robo(from);
+			div.appendChild(img);
+			div.appendChild(p);
+			container.appendChild(div);
+		}
+
+		const robo = uid => `https://robohash.org/${uid}.png`
+	</script>
+</body>
+</html>
